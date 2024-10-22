@@ -16,10 +16,10 @@
 ********************************************************************************/
 """
 from qrisp.operators.hamiltonian import Hamiltonian
-from qrisp.operators.pauli.helper_functions import *
-from qrisp.operators.pauli.pauli_term import PauliTerm
-from qrisp.operators.pauli.pauli_measurement import PauliMeasurement
-
+#from qrisp.operators.pauli.helper_functions import *
+#from qrisp.operators.pauli.pauli_term import PauliTerm
+#from qrisp.operators.pauli.pauli_measurement import PauliMeasurement
+from abc import ABC, abstractmethod
 import sympy as sp
 
 from sympy import init_printing
@@ -44,15 +44,10 @@ class PauliHamiltonian(Hamiltonian):
     where $P_j=\prod_i\sigma_i^j$ is a Pauli product, 
     and $\sigma_i^j\in\{I,X,Y,Z\}$ is the Pauli operator acting on qubit $i$.
 
-    Parameters
-    ----------
-    terms_dict : dict, optional
-        A dictionary representing a PauliHamiltonian.
-
     Examples
     --------
 
-    A PauliHamiltonian can be specified conveniently in terms of ``X``, ``Y``, ``Z`` operators:
+    A ``UnboundPauliHamiltonian`` can be specified conveniently in terms of ``X``, ``Y``, ``Z`` operators:
 
     ::
         
@@ -63,29 +58,41 @@ class PauliHamiltonian(Hamiltonian):
 
     Yields $1+2X_0+3X_0Y_1$.
 
-    """
 
-    def __init__(self, terms_dict={}):
-        self.terms_dict = terms_dict
+    A ``BoundPauliHamiltonian`` can be specified conveniently in terms of ``X``, ``Y``, ``Z`` operators:
+
+    ::
+
+        from qrisp import QuantumVariable
+        from qrisp.operators import BoundPauliHamiltonian, X,Y,Z
+        
+        qv = QuantumVariable(2)
+        H = 1+2*X(qv[0])+3*X(qv[0])*Y(qv[1])
+
+    Yields $1+2X(qv.0)+3X(qv.0)Y(qv.1)$.
+
+    """
+    @abstractmethod
+    def __init__(self):
         pass
 
+    @abstractmethod
     def len(self):
-        return len(self.terms_dict)
+        pass
     
     #
     # Printing
     #
 
+    @abstractmethod
     def _repr_latex_(self):
-        # Convert the sympy expression to LaTeX and return it
-        expr = self.to_expr()
-        return f"${sp.latex(expr)}$"
+        pass
     
+    @abstractmethod
     def __str__(self):
-        # Convert the sympy expression to a string and return it
-        expr = self.to_expr()
-        return str(expr)
-    
+        pass
+
+    @abstractmethod
     def to_expr(self):
         """
         Returns a SymPy expression representing the operator.
@@ -96,28 +103,13 @@ class PauliHamiltonian(Hamiltonian):
             A SymPy expression representing the operator.
 
         """
-        
-        expr = 0  
-        for pauli,coeff in self.terms_dict.items():
-            expr += coeff*pauli.to_expr()
-        return expr
+        pass
 
     #
     # Arithmetic
     #
 
-    def __pow__(self, e):
-        if self.len()==1:
-            if isinstance(e, int) and e>=0:
-                if e%2==0:
-                    return PauliHamiltonian({PauliTerm():1})
-                else:
-                    return self
-            else:
-                raise TypeError("Unsupported operand type(s) for ** or pow(): "+str(type(self))+" and "+str(type(e)))
-        else:
-            raise TypeError("Unsupported operand type(s) for ** or pow(): "+str(type(self))+" and "+str(type(e)))
-
+    @abstractmethod
     def __add__(self,other):
         """
         Returns the sum of the operator self and other.
@@ -133,27 +125,9 @@ class PauliHamiltonian(Hamiltonian):
             The sum of the operator self and other.
 
         """
+        pass
 
-        if isinstance(other,(int,float,complex)):
-            other = PauliHamiltonian({PauliTerm():other})
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot add PauliHamiltonian and "+str(type(other)))
-
-        res_terms_dict = {}
-
-        for pauli,coeff in self.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)+coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
-    
-        for pauli,coeff in other.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)+coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
-        
-        result = PauliHamiltonian(res_terms_dict)
-        return result
-    
+    @abstractmethod
     def __sub__(self,other):
         """
         Returns the difference of the operator self and other.
@@ -169,27 +143,9 @@ class PauliHamiltonian(Hamiltonian):
             The difference of the operator self and other.
 
         """
-
-        if isinstance(other,(int,float,complex)):
-            other = PauliHamiltonian({PauliTerm():other})
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot substract PauliHamiltonian and "+str(type(other)))
-
-        res_terms_dict = {}
-
-        for pauli,coeff in self.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)+coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
+        pass
     
-        for pauli,coeff in other.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)-coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
-        
-        result = PauliHamiltonian(res_terms_dict)
-        return result
-    
+    @abstractmethod 
     def __rsub__(self,other):
         """
         Returns the difference of the operator other and self.
@@ -205,27 +161,9 @@ class PauliHamiltonian(Hamiltonian):
             The difference of the operator other and self.
 
         """
+        pass
 
-        if isinstance(other,(int,float,complex)):
-            other = PauliHamiltonian({PauliTerm():other})
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot substract PauliHamiltonian and "+str(type(other)))
-
-        res_terms_dict = {}
-
-        for pauli,coeff in self.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)-coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
-    
-        for pauli,coeff in other.terms_dict.items():
-            res_terms_dict[pauli] = res_terms_dict.get(pauli,0)+coeff
-            if abs(res_terms_dict[pauli])<threshold:
-                del res_terms_dict[pauli]
-        
-        result = PauliHamiltonian(res_terms_dict)
-        return result
-
+    @abstractmethod 
     def __mul__(self,other):
         """
         Returns the product of the operator self and other.
@@ -241,21 +179,7 @@ class PauliHamiltonian(Hamiltonian):
             The product of the operator self and other.
 
         """
-
-        if isinstance(other,(int,float,complex)):
-            other = PauliHamiltonian({PauliTerm():other})
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot multipliy PauliHamiltonian and "+str(type(other)))
-
-        res_terms_dict = {}
-
-        for pauli1, coeff1 in self.terms_dict.items():
-            for pauli2, coeff2 in other.terms_dict.items():
-                curr_pauli, curr_coeff = pauli1*pauli2
-                res_terms_dict[curr_pauli] = res_terms_dict.get(curr_pauli,0) + curr_coeff*coeff1*coeff2
-
-        result = PauliHamiltonian(res_terms_dict)
-        return result
+        pass
 
     __radd__ = __add__
     __rmul__ = __mul__
@@ -263,7 +187,7 @@ class PauliHamiltonian(Hamiltonian):
     #
     # Inplace arithmetic
     #
-
+    @abstractmethod 
     def __iadd__(self,other):
         """
         Adds other to the operator self.
@@ -274,19 +198,9 @@ class PauliHamiltonian(Hamiltonian):
             A scalar or a PauliHamiltonian to add to the operator self.
 
         """
+        pass       
 
-        if isinstance(other,(int,float,complex)):
-            self.terms_dict[PauliTerm()] = self.terms_dict.get(PauliTerm(),0)+other
-            return self
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot add PauliHamiltonian and "+str(type(other)))
-
-        for pauli,coeff in other.terms_dict.items():
-            self.terms_dict[pauli] = self.terms_dict.get(pauli,0)+coeff
-            if abs(self.terms_dict[pauli])<threshold:
-                del self.terms_dict[pauli]       
-        return self         
-
+    @abstractmethod 
     def __isub__(self,other):
         """
         Substracts other from the operator self.
@@ -297,19 +211,9 @@ class PauliHamiltonian(Hamiltonian):
             A scalar or a PauliHamiltonian to substract from the operator self.
 
         """
+        pass
 
-        if isinstance(other,(int,float,complex)):
-            self.terms_dict[PauliTerm()] = self.terms_dict.get(PauliTerm(),0)-other
-            return self
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot add PauliHamiltonian and "+str(type(other)))
-
-        for pauli,coeff in other.terms_dict.items():
-            self.terms_dict[pauli] = self.terms_dict.get(pauli,0)-coeff
-            if abs(self.terms_dict[pauli])<threshold:
-                del self.terms_dict[pauli]  
-        return self
-    
+    @abstractmethod  
     def __imul__(self,other):
         """
         Multiplys other to the operator self.
@@ -320,30 +224,12 @@ class PauliHamiltonian(Hamiltonian):
             A scalar or a PauliHamiltonian to multiply with the operator self.
 
         """
-
-        if isinstance(other,(int,float,complex)):
-            #other = PauliHamiltonian({PauliTerm():other})
-            for term in self.terms_dict:
-                self.terms_dict[term] *= other
-            return self
-
-        if not isinstance(other,PauliHamiltonian):
-            raise TypeError("Cannot multipliy PauliHamiltonian and "+str(type(other)))
-
-        res_terms_dict = {}
-
-        for pauli1, coeff1 in self.terms_dict.items():
-            for pauli2, coeff2 in other.terms_dict.items():
-                curr_pauli, curr_coeff = pauli1*pauli2
-                res_terms_dict[curr_pauli] = res_terms_dict.get(curr_pauli,0) + curr_coeff*coeff1*coeff2
-
-        self.terms_dict = res_terms_dict    
-        return self
+        pass
 
     #
     # Substitution
     #
-
+    @abstractmethod 
     def subs(self, subs_dict):
         """
         
@@ -358,20 +244,12 @@ class PauliHamiltonian(Hamiltonian):
             The resulting PauliHamiltonian.
         
         """
-
-        res_terms_dict = {}
-
-        for pauli, coeff in self.terms_dict.items():
-            curr_pauli, curr_coeff = pauli.subs(subs_dict)
-            res_terms_dict[curr_pauli] = res_terms_dict.get(curr_pauli,0) + curr_coeff*coeff
-
-        result = PauliHamiltonian(res_terms_dict)
-        return result
+        pass
 
     #
     # Miscellaneous
     #
-
+    @abstractmethod 
     def apply_threshold(self,threshold):
         """
         Removes all Pauli terms with coefficient absolute value below the specified threshold.
@@ -382,14 +260,9 @@ class PauliHamiltonian(Hamiltonian):
             The threshold for the coefficients of the Pauli terms.
 
         """
+        pass
 
-        delete_list = []
-        for pauli,coeff in self.terms_dict.items():
-            if abs(coeff)<threshold:
-                delete_list.append(pauli)
-        for pauli in delete_list:
-            del self.terms_dict[pauli]
-
+    @abstractmethod 
     def to_sparse_matrix(self):
         """
         Returns a matrix representing the operator.
@@ -400,50 +273,9 @@ class PauliHamiltonian(Hamiltonian):
             A sparse matrix representing the operator.
 
         """
+        pass
 
-        import scipy.sparse as sp
-        from scipy.sparse import kron as TP, csr_matrix
-
-        I = csr_matrix([[1,0],[0,1]])
-
-        def get_matrix(P):
-            if P=="I":
-                return csr_matrix([[1,0],[0,1]])
-            if P=="X":
-                return csr_matrix([[0,1],[1,0]])
-            if P=="Y":
-                return csr_matrix([[0,-1j],[1j,0]])
-            else:
-                return csr_matrix([[1,0],[0,-1]])
-
-        def recursive_TP(keys,pauli_dict):
-            if len(keys)==1:
-                return get_matrix(pauli_dict.get(keys[0],"I"))
-            return TP(get_matrix(pauli_dict.get(keys.pop(0),"I")),recursive_TP(keys,pauli_dict))
-
-        pauli_dicts = []
-        coeffs = []
-
-        keys = set()
-        for pauli,coeff in self.terms_dict.items():
-            curr_dict = pauli.pauli_dict
-            keys.update(set(curr_dict.keys()))
-            pauli_dicts.append(curr_dict)    
-            coeffs.append(coeff)
-
-        keys = set()
-        for item in pauli_dicts:
-            keys.update(set(item.keys()))
-        keys = sorted(keys)
-        dim = len(keys)
-
-        m = len(coeffs)
-        M = sp.csr_matrix((2**dim, 2**dim))
-        for k in range(m):
-            M += complex(coeffs[k])*recursive_TP(keys.copy(),pauli_dicts[k])
-
-        return M
-
+    @abstractmethod 
     def ground_state_energy(self):
         """
         Calculates the ground state energy (i.e., the minimum eigenvalue) of the operator classically.
@@ -454,21 +286,14 @@ class PauliHamiltonian(Hamiltonian):
             The ground state energy. 
 
         """
-
-        from scipy.sparse.linalg import eigsh
-
-        M = self.to_sparse_matrix()
-        # Compute the smallest eigenvalue
-        eigenvalues, _ = eigsh(M, k=1, which='SA')  # 'SA' stands for smallest algebraic
-        E = eigenvalues[0]
-
-        return E
+        pass
     
     #
     # Partitions 
     #
 
     # Commutativity: Partitions the PauliHamiltonian into PauliHamiltonians with pairwise commuting PauliTerms
+    @abstractmethod 
     def commuting_groups(self):
         r"""
         Partitions the PauliHamiltonian into PauliHamiltonians with pairwise commuting terms. That is,
@@ -485,30 +310,10 @@ class PauliHamiltonian(Hamiltonian):
             The partition of the Hamiltonian.
         
         """
-
-        groups = [] # Groups of commuting PauliTerms 
-
-        # Sorted insertion heuristic https://quantum-journal.org/papers/q-2021-01-20-385/pdf/
-        sorted_terms = sorted(self.terms_dict.items(), key=lambda item: abs(item[1]), reverse=True)
-
-        for pauli,coeff in sorted_terms:
-
-            commute_bool = False
-            if len(groups) > 0:
-                for group in groups:
-                    for pauli_,coeff_ in group.terms_dict.items():
-                        commute_bool = pauli_.commute(pauli)
-                        if not commute_bool:
-                            break
-                    if commute_bool:
-                        group.terms_dict[pauli]=coeff
-                        break
-            if len(groups)==0 or not commute_bool: 
-                groups.append(PauliHamiltonian({pauli:coeff}))
-
-        return groups
+        pass
 
     # Qubit-wise commutativity: Partitions the PauliHamiltonian into PauliHamiltonians with pairwise qubit-wise commuting PauliTerms
+    @abstractmethod 
     def commuting_qw_groups(self, show_bases=False):
         r"""
         Partitions the PauliHamiltonian into PauliHamiltonians with pairwise qubit-wise commuting terms. That is,
@@ -525,44 +330,19 @@ class PauliHamiltonian(Hamiltonian):
             The partition of the Hamiltonian.
         
         """
-
-        groups = [] # Groups of qubit-wise commuting PauliTerms
-        bases = [] # Bases as PauliTerms
-
-        # Sorted insertion heuristic https://quantum-journal.org/papers/q-2021-01-20-385/pdf/
-        sorted_terms = sorted(self.terms_dict.items(), key=lambda item: abs(item[1]), reverse=True)
-
-        for pauli,coeff in sorted_terms:
-
-            commute_bool = False
-            if len(groups)>0:
-                n = len(groups)
-                for i in range(n):
-                    commute_bool = bases[i].commute_qw(pauli)
-                    if commute_bool:
-                        bases[i].update(pauli.pauli_dict)
-                        groups[i].terms_dict[pauli]=coeff
-                        break
-            if len(groups)==0 or not commute_bool:
-                groups.append(PauliHamiltonian({pauli:coeff}))
-                bases.append(pauli.copy())
-
-        if show_bases:
-            return groups, bases
-        else:
-            return groups
+        pass
     
     #
     # Measurement settings
     #
-
+    @abstractmethod 
     def pauli_measurement(self):
-        return PauliMeasurement(self)
+        pass
 
     #
     # Trotterization
     #
-
+    @abstractmethod 
     def trotterization(self):
         r"""
         Returns a function for performing Hamiltonian simulation, i.e., approximately implementing the unitary operator $e^{itH}$ via Trotterization.
@@ -590,34 +370,4 @@ class PauliHamiltonian(Hamiltonian):
                 The number of iterations the unitary $U_1(t,N)$ is applied. The default is 1.
         
         """
-
-        from qrisp import conjugate, rx, ry, rz, cx, h, IterationEnvironment, gphase
-
-        pauli_measurement = self.pauli_measurement()
-        bases = pauli_measurement.bases
-        indices = pauli_measurement.operators_ind # Indices of Z's in PauliTerms (after change of basis)
-        operators_int = pauli_measurement.operators_int
-        coefficients = pauli_measurement.coefficients
-
-        def trotter_step(qarg, t, steps):
-
-            N = len(bases)
-            for k in range(N):
-                basis = bases[k].pauli_dict
-
-                with conjugate(change_of_basis)(qarg, basis):
-                    M = len(indices[k])
-
-                    for l in range(M):
-                        if operators_int[k][l]>0: # Not identity
-                            with conjugate(parity)(qarg, indices[k][l]):
-                                rz(-2*coefficients[k][l]*t/steps,qarg[indices[k][l][-1]])
-                        else: # Identity
-                            gphase(coefficients[k][l]*t/steps,qarg[0])
-
-        def U(qarg, t=1, steps=1, iter=1):
-            with IterationEnvironment(qarg.qs, iter):
-                for i in range(steps):
-                    trotter_step(qarg, t, steps)
-
-        return U
+        pass

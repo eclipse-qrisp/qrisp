@@ -18,7 +18,7 @@
 
 # -*- coding: utf-8 -*-
 
-from qrisp.operators.pauli.pauli_hamiltonian import *
+from qrisp.operators.pauli.unbound_pauli_hamiltonian import *
 from qrisp.operators.pauli.bound_pauli_hamiltonian import *
 from qrisp.operators.pauli.pauli_measurement import *
 from qrisp.operators.pauli.pauli import *

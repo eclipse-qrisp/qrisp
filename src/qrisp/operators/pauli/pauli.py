@@ -17,14 +17,14 @@
 """
 
 from qrisp.circuit.qubit import Qubit
-from qrisp.operators.pauli.pauli_hamiltonian import PauliHamiltonian
+from qrisp.operators.pauli.unbound_pauli_hamiltonian import UnboundPauliHamiltonian
 from qrisp.operators.pauli.bound_pauli_hamiltonian import BoundPauliHamiltonian
-from qrisp.operators.pauli.pauli_term import PauliTerm
+from qrisp.operators.pauli.unbound_pauli_term import UnboundPauliTerm
 from qrisp.operators.pauli.bound_pauli_term import BoundPauliTerm
 
 def X(arg):
     if isinstance(arg,int):
-        return PauliHamiltonian({PauliTerm({arg:"X"}):1})
+        return UnboundPauliHamiltonian({UnboundPauliTerm({arg:"X"}):1})
     elif isinstance(arg, Qubit):
         return BoundPauliHamiltonian({BoundPauliTerm({arg:"X"}):1})
     else:
@@ -32,7 +32,7 @@ def X(arg):
 
 def Y(arg):
     if isinstance(arg,int):
-        return PauliHamiltonian({PauliTerm({arg:"Y"}):1})
+        return UnboundPauliHamiltonian({UnboundPauliTerm({arg:"Y"}):1})
     elif isinstance(arg, Qubit):
         return BoundPauliHamiltonian({BoundPauliTerm({arg:"Y"}):1})
     else:
@@ -40,7 +40,7 @@ def Y(arg):
 
 def Z(arg):
     if isinstance(arg,int):
-        return PauliHamiltonian({PauliTerm({arg:"Z"}):1})
+        return UnboundPauliHamiltonian({UnboundPauliTerm({arg:"Z"}):1})
     elif isinstance(arg, Qubit):
         return BoundPauliHamiltonian({BoundPauliTerm({arg:"Z"}):1})
     else:
